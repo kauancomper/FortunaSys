@@ -49,7 +49,7 @@
 ## 📖 Como Utilizar
 
 1.  **Requisitos**: Apenas um navegador moderno (Chrome, Edge ou Safari).
-2.  **Execução**: Abra o arquivo `gerenciador-vendas-bingo.html`.
+2.  **Execução**: Abra o arquivo `index.html`.
 3.  **Configuração**:
     *   Certifique-se de que o arquivo `cards_data.json` esteja na mesma pasta (base de dados das cartelas).
     *   O sistema consome o logotipo de `src/assets/fortunasys.png`.
