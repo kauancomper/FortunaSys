@@ -932,20 +932,28 @@
             // BUSCAR DADOS DA NUVEM
             const fetchData = async () => {
                 setIsLoading(true);
-                const { data, error } = await supabase
-                    .from('vendas_bingo')
-                    .select('*');
+                try {
+                    const { data, error } = await supabase
+                        .from('vendas_bingo')
+                        .select('*');
 
-                if (error) {
-                    console.error('Erro ao buscar dados:', error);
-                } else {
-                    // Mapeia os dados da nuvem para o formato local
-                    const cloudMap = new Map(data.map(item => [item.id, item]));
-                    const fullList = Array.from({ length: TOTAL_CARDS }, (_, i) => {
-                        const id = i + 1;
-                        return cloudMap.get(id) || { id, buyer: '', phone: '', seller: '', sold: false };
-                    });
-                    setSalesData(fullList);
+                    if (error) {
+                        console.error('Erro ao buscar dados do Supabase:', error);
+                        alert(`⚠️ Erro ao conectar com o Supabase:\n${error.message}\n\nVerifique o console para mais detalhes.`);
+                    } else {
+                        // Mapeia os dados da nuvem para o formato local
+                        const cloudMap = new Map(data.map(item => [item.id, item]));
+                        const fullList = Array.from({ length: TOTAL_CARDS }, (_, i) => {
+                            const id = i + 1;
+                            return cloudMap.get(id) || { id, buyer: '', phone: '', seller: '', sold: false };
+                        });
+                        setSalesData(fullList);
+                    }
+                } catch (e) {
+                    console.error('Exceção ao conectar com Supabase:', e);
+                    alert(`⚠️ Falha de rede ao conectar com o Supabase.\n\nVerifique sua conexão com a internet e se as credenciais estão corretas.`);
+                } finally {
+                    setIsLoading(false);
                 }
             };
 
