@@ -1,3 +1,5 @@
+<!-- FortuneSys - Bingo Management System -->
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -1246,7 +1248,7 @@
                                                     Mostrando <b>{filteredData.length === 0 ? 0 : Math.min(filteredData.length, (currentPage - 1) * itemsPerPage + 1)}</b> a <b>{Math.min(filteredData.length, currentPage * itemsPerPage)}</b> de <b>{filteredData.length}</b> vendas
                                                 </div>
                                                 <div className="pagination-buttons">
-                                                    <button 
+                                                    <button
                                                         className="pagination-btn"
                                                         disabled={currentPage === 1}
                                                         onClick={() => setCurrentPage(1)}
@@ -1254,7 +1256,7 @@
                                                     >
                                                         &laquo;
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         className="pagination-btn"
                                                         disabled={currentPage === 1}
                                                         onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
@@ -1302,7 +1304,7 @@
                                                         return pages;
                                                     })()}
 
-                                                    <button 
+                                                    <button
                                                         className="pagination-btn"
                                                         disabled={currentPage === totalPages}
                                                         onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
@@ -1310,7 +1312,7 @@
                                                     >
                                                         &rsaquo;
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         className="pagination-btn"
                                                         disabled={currentPage === totalPages}
                                                         onClick={() => setCurrentPage(totalPages)}
