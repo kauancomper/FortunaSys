@@ -1,3 +1,5 @@
+<!-- FortuneSys - Bingo Management System -->
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -38,7 +40,7 @@
 
         body {
             background-color: var(--bg);
-            background-image: 
+            background-image:
                 radial-gradient(circle at 50% -20%, rgba(212, 175, 55, 0.05), transparent 80%),
                 radial-gradient(circle at 0% 0%, rgba(0, 0, 0, 1), transparent 50%);
             color: var(--text-main);
@@ -349,6 +351,76 @@
             border-radius: 10px;
         }
 
+        /* PAGINAÇÃO */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            padding: 20px 25px;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 0 0 18px 18px;
+            flex-wrap: wrap;
+        }
+
+        .pagination-info {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pagination-btn {
+            min-width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background: rgba(212, 175, 55, 0.08);
+            color: var(--primary);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.1);
+        }
+
+        .pagination-btn.active {
+            background: var(--primary);
+            color: #000;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.25;
+            cursor: not-allowed;
+            border-color: var(--glass-border);
+        }
+
+        .pagination-ellipsis {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 0 4px;
+            user-select: none;
+        }
+
         /* ESTILOS DO BINGO INTEGRADO */
         .admin-nav {
             display: flex;
@@ -402,7 +474,7 @@
             border: 1px solid var(--glass-border);
             text-align: center;
             transition: 0.4s;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
         }
 
         .h-stat:hover {
@@ -736,7 +808,7 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 2px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             font-family: 'Space Grotesk';
             font-size: 0.75rem;
             text-align: center;
@@ -765,6 +837,14 @@
             const [view, setView] = useState('sales');
             const [adminTab, setAdminTab] = useState('vendas'); // 'vendas' ou 'bingo'
             const [search, setSearch] = useState('');
+            const [currentPage, setCurrentPage] = useState(1);
+            const itemsPerPage = 25;
+
+            // Redefinir para a página 1 ao pesquisar ou mudar de aba/visão
+            useEffect(() => {
+                setCurrentPage(1);
+            }, [search, adminTab, view]);
+
             const [showLogin, setShowLogin] = useState(false);
             const [loginUser, setLoginUser] = useState('');
             const [loginPass, setLoginPass] = useState('');
@@ -867,7 +947,23 @@
                     });
                     setSalesData(fullList);
                 }
-                setIsLoading(false);
+            };
+
+            const generateMockSales = () => {
+                const mockSales = Array.from({ length: TOTAL_CARDS }, (_, i) => {
+                    const id = i + 1;
+                    if (id <= 200) {
+                        return {
+                            id,
+                            buyer: `Comprador Fictício ${id}`,
+                            phone: `(11) 99999-${String(1000 + id).slice(-4)}`,
+                            seller: `Vendedor ${1 + (id % 5)}`,
+                            sold: true
+                        };
+                    }
+                    return { id, buyer: '', phone: '', seller: '', sold: false };
+                });
+                setSalesData(mockSales);
             };
 
             useEffect(() => {
@@ -917,8 +1013,8 @@
             };
 
             const handleLogin = (e) => {
-                if(e) e.preventDefault();
-                if(loginUser === 'admin' && loginPass === 'admin123') {
+                if (e) e.preventDefault();
+                if (loginUser === 'admin' && loginPass === 'admin123') {
                     setView('admin');
                     setShowLogin(false);
                     setLoginUser('');
@@ -1002,9 +1098,9 @@
 
             const filteredData = useMemo(() => {
                 const s = search.toLowerCase().trim();
-                // No Admin, se não houver pesquisa, mostra as últimas 50 vendidas
+                // No Admin, se não houver pesquisa, mostra todas as vendidas
                 if (view === 'admin' && !s) {
-                    return salesData.filter(item => item.sold).slice(-50).reverse();
+                    return salesData.filter(item => item.sold);
                 }
 
                 if (!s) return salesData.slice(0, 50); // Fallback para não travar a tela
@@ -1021,8 +1117,19 @@
                     const matchSeller = (item.seller || '').toLowerCase().includes(s);
 
                     return matchId || matchBuyer || matchSeller;
-                }).slice(0, 200);
+                });
             }, [salesData, search, view]);
+
+            const totalPages = useMemo(() => {
+                return Math.max(1, Math.ceil(filteredData.length / itemsPerPage));
+            }, [filteredData, itemsPerPage]);
+
+            const paginatedData = useMemo(() => {
+                const totalP = Math.max(1, Math.ceil(filteredData.length / itemsPerPage));
+                const currentP = Math.min(currentPage, totalP);
+                const startIndex = (currentP - 1) * itemsPerPage;
+                return filteredData.slice(startIndex, startIndex + itemsPerPage);
+            }, [filteredData, currentPage, itemsPerPage]);
 
             return (
                 <div className="container">
@@ -1048,6 +1155,7 @@
                                     onClick={() => setShowLogin(true)}>ADMIN</button>
                             ) : (
                                 <>
+                                    <button className="btn-action btn-outline" style={{ fontSize: '0.65rem', padding: '10px 20px', borderColor: 'var(--success)', color: 'var(--success)' }} onClick={generateMockSales}>GERAR TESTE (200)</button>
                                     <button className="btn-action btn-outline" style={{ fontSize: '0.65rem', padding: '10px 20px' }} onClick={fetchData}>ATUALIZAR</button>
                                     <button className="btn-action btn-outline" style={{ fontSize: '0.65rem', padding: '10px 20px' }} onClick={() => setView('sales')}>SAIR</button>
                                 </>
@@ -1122,7 +1230,7 @@
                                             <div>CARTELA</div><div>COMPRADOR</div><div className="text-dim">WHATSAPP</div><div className="text-dim">VENDEDOR</div><div>STATUS</div>
                                         </div>
                                         <div className="table-body custom-scroll">
-                                            {filteredData.map(item => (
+                                            {paginatedData.map(item => (
                                                 <div key={item.id} className="sale-row">
                                                     <div style={{ fontFamily: 'Bebas Neue', fontSize: '1.4rem', color: 'var(--primary)' }}>{item.id}</div>
                                                     <div style={{ fontWeight: 700 }}>{item.buyer || '-'}</div>
@@ -1131,8 +1239,90 @@
                                                     <div className={`status-badge ${item.sold ? 'status-sold' : 'status-open'}`}>{item.sold ? 'OK' : 'ABERTA'}</div>
                                                 </div>
                                             ))}
-                                            {filteredData.length === 0 && <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-dim)' }}>Nenhuma venda encontrada.</div>}
+                                            {paginatedData.length === 0 && <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-dim)' }}>Nenhuma venda encontrada.</div>}
                                         </div>
+                                        {/* CONTROLES DE PAGINAÇÃO */}
+                                        {totalPages > 1 && (
+                                            <div className="pagination-container">
+                                                <div className="pagination-info">
+                                                    Mostrando <b>{filteredData.length === 0 ? 0 : Math.min(filteredData.length, (currentPage - 1) * itemsPerPage + 1)}</b> a <b>{Math.min(filteredData.length, currentPage * itemsPerPage)}</b> de <b>{filteredData.length}</b> vendas
+                                                </div>
+                                                <div className="pagination-buttons">
+                                                    <button
+                                                        className="pagination-btn"
+                                                        disabled={currentPage === 1}
+                                                        onClick={() => setCurrentPage(1)}
+                                                        title="Primeira Página"
+                                                    >
+                                                        &laquo;
+                                                    </button>
+                                                    <button
+                                                        className="pagination-btn"
+                                                        disabled={currentPage === 1}
+                                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                                        title="Página Anterior"
+                                                    >
+                                                        &lsaquo;
+                                                    </button>
+
+                                                    {(() => {
+                                                        const pages = [];
+                                                        const maxButtons = 5;
+                                                        let start = Math.max(1, currentPage - 2);
+                                                        let end = Math.min(totalPages, currentPage + 2);
+
+                                                        if (currentPage <= 3) {
+                                                            end = Math.min(totalPages, maxButtons);
+                                                        }
+                                                        if (currentPage > totalPages - 2) {
+                                                            start = Math.max(1, totalPages - maxButtons + 1);
+                                                        }
+
+                                                        if (start > 1) {
+                                                            pages.push(
+                                                                <button key={1} className={`pagination-btn ${currentPage === 1 ? 'active' : ''}`} onClick={() => setCurrentPage(1)}>1</button>
+                                                            );
+                                                            if (start > 2) {
+                                                                pages.push(<span key="ellipsis-start" className="pagination-ellipsis">...</span>);
+                                                            }
+                                                        }
+
+                                                        for (let i = start; i <= end; i++) {
+                                                            pages.push(
+                                                                <button key={i} className={`pagination-btn ${currentPage === i ? 'active' : ''}`} onClick={() => setCurrentPage(i)}>{i}</button>
+                                                            );
+                                                        }
+
+                                                        if (end < totalPages) {
+                                                            if (end < totalPages - 1) {
+                                                                pages.push(<span key="ellipsis-end" className="pagination-ellipsis">...</span>);
+                                                            }
+                                                            pages.push(
+                                                                <button key={totalPages} className={`pagination-btn ${currentPage === totalPages ? 'active' : ''}`} onClick={() => setCurrentPage(totalPages)}>{totalPages}</button>
+                                                            );
+                                                        }
+                                                        return pages;
+                                                    })()}
+
+                                                    <button
+                                                        className="pagination-btn"
+                                                        disabled={currentPage === totalPages}
+                                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                                        title="Próxima Página"
+                                                    >
+                                                        &rsaquo;
+                                                    </button>
+                                                    <button
+                                                        className="pagination-btn"
+                                                        disabled={currentPage === totalPages}
+                                                        onClick={() => setCurrentPage(totalPages)}
+                                                        title="Última Página"
+                                                    >
+                                                        &raquo;
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </>
                             ) : (
@@ -1260,9 +1450,9 @@
                     <AnimatePresence>
                         {isRaffleModal && (
                             <div className="modal-bg" style={{ zIndex: 3000 }}>
-                                <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} 
+                                <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }}
                                     className="glass modal-content" style={{ maxWidth: '500px', textAlign: 'center', padding: '50px' }}>
-                                    
+
                                     <div style={{ marginBottom: '40px' }}>
                                         <h2 className="bebas" style={{ fontSize: '2.8rem', color: isRaffling ? 'var(--text-dim)' : 'var(--primary)', letterSpacing: '4px' }}>
                                             {isRaffling ? 'SORTEANDO...' : 'TEMOS UM GANHADOR!'}
@@ -1274,7 +1464,7 @@
                                             <div style={{ fontSize: '10rem', color: 'var(--primary)', fontFamily: 'Bebas Neue', lineHeight: 0.8, textShadow: isRaffling ? 'none' : '0 0 50px var(--primary-glow)', marginBottom: '30px' }}>
                                                 {raffleResult.id}
                                             </div>
-                                            
+
                                             {!isRaffling && (
                                                 <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} style={{ marginTop: '30px', borderTop: '1px solid var(--glass-border)', paddingTop: '30px' }}>
                                                     <h3 className="bebas" style={{ fontSize: '3rem', color: '#FFF', letterSpacing: '2px' }}>{raffleResult.buyer.toUpperCase()}</h3>
@@ -1288,7 +1478,7 @@
 
                                     <div style={{ marginTop: '50px', display: 'flex', justifyContent: 'center', width: '100%' }}>
                                         {!isRaffling && (
-                                            <button onClick={() => setIsRaffleModal(false)} className="btn-action btn-primary" 
+                                            <button onClick={() => setIsRaffleModal(false)} className="btn-action btn-primary"
                                                 style={{ padding: '20px 60px', fontSize: '1.1rem', borderRadius: '18px', width: 'auto', minWidth: '200px' }}>
                                                 CONCLUIR SORTEIO
                                             </button>
@@ -1302,7 +1492,7 @@
                     <AnimatePresence>
                         {showLogin && (
                             <div className="modal-bg">
-                                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} 
+                                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
                                     className="glass modal-content" style={{ maxWidth: '400px', padding: '40px' }}>
                                     <div style={{ textAlign: 'center', marginBottom: '30px' }}>
                                         <img src="src/assets/fortunasys.png" alt="Logo" style={{ width: '60px', height: 'auto', marginBottom: '10px' }} />
@@ -1313,12 +1503,12 @@
                                     <form onSubmit={handleLogin}>
                                         <div className="form-group">
                                             <label className="form-label">Usuário</label>
-                                            <input type="text" required className="form-input" 
+                                            <input type="text" required className="form-input"
                                                 value={loginUser} onChange={e => setLoginUser(e.target.value)} />
                                         </div>
                                         <div className="form-group">
                                             <label className="form-label">Senha</label>
-                                            <input type="password" required className="form-input" 
+                                            <input type="password" required className="form-input"
                                                 value={loginPass} onChange={e => setLoginPass(e.target.value)} />
                                         </div>
 
